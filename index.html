@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tema 3</title>
+    <style>
+        /* Estilos generales */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.07);
+            overflow: hidden;
+        }
+        
+        /* Encabezado */
+        header {
+            padding: 25px 30px;
+            background-color: #007bff;
+            color: white;
+        }
+        header h1 {
+            margin: 0;
+            font-size: 26px;
+            font-weight: 600;
+        }
+        
+        /* Marcador (Scoreboard) - General */
+        .scoreboard {
+            display: flex;
+            justify-content: space-around;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .score-item {
+            text-align: center;
+        }
+        .score-item span {
+            display: block;
+            font-size: 26px;
+            font-weight: bold;
+            margin-top: 4px;
+        }
+        .score-item {
+            font-size: 14px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        /* Colores para el marcador final */
+        #score-aciertos { color: #28a745; }
+        #score-errores { color: #dc3545; }
+        #score-quedan { color: #6c757d; }
+        /* Colores para el marcador en vivo */
+        #score-aciertos-live { color: #28a745; }
+        #score-errores-live { color: #dc3545; }
+        
+        /* Formulario del Test */
+        #quizForm {
+            padding: 30px;
+            /* Damos una altura mínima para que no "salte" la página */
+            min-height: 250px; 
+        }
+        .question-block {
+            margin-bottom: 25px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 20px;
+        }
+        /* En el modo de una sola pregunta, no queremos bordes inferiores */
+        .single-question-mode .question-block {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        .question-block:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+        .question-block p {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #222;
+        }
+        
+        /* Opciones de respuesta */
+        .question-block label {
+            display: block;
+            background-color: #fdfdfd;
+            border: 1px solid #ddd;
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
+        }
+        .question-block label:hover {
+            background-color: #f0f8ff;
+            border-color: #007bff;
+            box-shadow: 0 2px 4px rgba(0,123,255,0.1);
+        }
+        /* Deshabilitar clics en preguntas ya respondidas */
+        .question-block.answered label {
+            cursor: not-allowed;
+            pointer-events: none;
+            opacity: 0.9;
+        }
+        .question-block input[type="radio"] {
+            display: none; /* Ocultamos el radio button original */
+        }
+        /* Estilo para la opción seleccionada */
+        .question-block input[type="radio"]:checked + span {
+            font-weight: 600;
+            color: #0056b3;
+        }
+        
+        /* Estilos para respuestas post-calificación */
+        .question-block label.correct {
+            background-color: #d4edda !important;
+            border-color: #c3e6cb !important;
+            color: #155724;
+            font-weight: bold;
+        }
+        .question-block label.correct:hover {
+            background-color: #c3e6cb !important;
+        }
+        .question-block label.incorrect {
+            background-color: #f8d7da !important;
+            border-color: #f5c6cb !important;
+            color: #721c24;
+            font-weight: bold;
+        }
+        .question-block label.incorrect:hover {
+            background-color: #f5c6cb !important;
+        }
+        /* Estilo para la respuesta incorrecta seleccionada por el usuario */
+        .question-block label.user-incorrect {
+            text-decoration: line-through;
+            opacity: 0.8;
+        }
+        /* Estilos para anular el color del texto del span en respuestas */
+        .question-block label.correct span,
+        .question-block label.incorrect span {
+            font-weight: 700;
+            color: inherit; /* Hereda el color de la etiqueta (.correct o .incorrect) */
+        }
+
+        /* Navegación */
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            padding: 0 30px 30px 30px;
+        }
+        .nav-button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        #prevBtn {
+            background-color: #6c757d;
+            color: white;
+        }
+        #prevBtn:hover {
+            background-color: #5a6268;
+        }
+        #prevBtn:disabled {
+            background-color: #e0e0e0;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        #nextBtn {
+            background-color: #007bff;
+            color: white;
+        }
+        #nextBtn:hover {
+            background-color: #0056b3;
+        }
+        #nextBtn.submit-style {
+            background-color: #28a745;
+        }
+        #nextBtn.submit-style:hover {
+            background-color: #218838;
+        }
+
+        /* Ocultar elementos */
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Tema 3</h1>
+        </header>
+
+        <!-- Marcador de Progreso (durante el test) -->
+        <div id="quiz-progress" class="scoreboard">
+            <div class="score-item">
+                Progreso
+                <span id="progress-text">1 / 19</span>
+            </div>
+            <div class="score-item">
+                Aciertos
+                <span id="score-aciertos-live">0</span>
+            </div>
+            <div class="score-item">
+                Errores
+                <span id="score-errores-live">0</span>
+            </div>
+        </div>
+
+        <!-- Marcador de Resultados (al final) -->
+        <div id="results-board" class="scoreboard hidden">
+            <div class="score-item">
+                Aciertos
+                <span id="score-aciertos">0</span>
+            </div>
+            <div class="score-item">
+                Errores
+                <span id="score-errores">0</span>
+            </div>
+            <div class="score-item">
+                Sin contestar
+                <span id="score-quedan">19</span>
+            </div>
+        </div>
+
+        <!-- Contenedor de la pregunta activa o de los resultados -->
+        <form id="quizForm" class="single-question-mode">
+            <!-- Las preguntas se cargarán aquí dinámicamente -->
+        </form>
+
+        <!-- Botones de Navegación -->
+        <div class="navigation" id="nav-buttons">
+            <button id="prevBtn" class="nav-button">Anterior</button>
+            <button id="nextBtn" class="nav-button">Siguiente</button>
+        </div>
+    </div>
+
+    <script>
+        // --- DATOS DEL TEST ---
+        const quizData = [
+            {
+                question: "1. ¿Cuál es el principal objetivo de la Atención Primaria en el SNS?",
+                options: { a: "Proveer atención de primer nivel y prevención", b: "Realizar operaciones quirúrgicas complejas", c: "Coordinar el sistema financiero del SNS", d: "Elaborar políticas de salud pública" },
+                answer: "a"
+            },
+            {
+                question: "2. ¿Cuál es el nivel asistencial que se caracteriza por un mayor uso de tecnología y necesidad de ingreso?",
+                options: { a: "Atención primaria", b: "Atención comunitaria", c: "Atención hospitalaria", d: "Atención domiciliaria" },
+                answer: "c"
+            },
+            {
+                question: "3. ¿Cuál es el documento que acredita a los ciudadanos como usuarios del Sistema Nacional de Salud?",
+                options: { a: "Certificado Médico Oficial", b: "Carnet de Seguridad Social", c: "Tarjeta Sanitaria Individual", d: "Documento Nacional de Identidad" },
+                answer: "c"
+            },
+            {
+                question: "4. ¿Qué indica la medida conocida como Accesibilidad General Media (AGM)?",
+                options: { a: "Tiempo medio de desplazamiento a los servicios sanitarios", b: "Indice de coste medio de atención hospitalaria", c: "Porcentaje de la población con seguro", d: "Tasa de mortalidad media regional" },
+                answer: "a"
+            },
+            {
+                question: "5. ¿Qué órgano representa el máximo espacio de coordinación entre comunidades autónomas y el Estado?",
+                options: { a: "Consejo de Dirección del Área", b: "Consejo Interterritorial de Salud", c: "Comisión de Cohesión Sanitaria", d: "Ministerio de Sanidad" },
+                answer: "b"
+            },
+            {
+                question: "6. ¿Cuál de las siguientes NO pertenece a la Cartera Común Suplementaria del SNS?",
+                options: { a: "Transporte sanitario urgente", b: "Productos dietéticos", c: "Prestación farmacéutica", d: "Prestación ortoprotésica" },
+                answer: "a"
+            },
+            {
+                question: "7. ¿Qué población puede acceder a la sanidad española aunque no esté registrada como residente?",
+                options: { a: "Solo pensionistas", b: "Solo personas con empleo formal", c: "Solo los ciudadanos españoles", d: "Personas extranjeras no registradas" },
+                answer: "d"
+            },
+            {
+                question: "8. ¿Qué elemento del sistema debe estar situado a no más de 15 minutos de la AGM?",
+                options: { a: "Ambulancia", b: "Oficina de farmacia", c: "Hospital de referencia", d: "Centro de salud" },
+                answer: "d"
+            },
+            {
+                question: "9. ¿Cuál fue una característica estructural negativa del Seguro Obligatorio de Enfermedad (SOE)?",
+                options: { a: "Se diseñó bajo principios democráticos", b: "Nació sin estrategia global ni planes de futuro", c: "Se basaba en historias clínicas electrónicas", d: "Era controlado por los usuarios" },
+                answer: "b"
+            },
+            {
+                question: "10. ¿Cuál es uno de los requisitos para ostentar la condición de asegurado si no se cotiza?",
+                options: { a: "Tener menos de 18 años", b: "Disponer de tarjeta de transporte sanitario", c: "No superar los 100.000 € de ingresos anuales", d: "Tener nacionalidad de un país africano" },
+                answer: "c"
+            },
+            // Pregunta 11 omitida por ambigüedad en el PDF
+            {
+                question: "12. ¿Qué institución fue sustituida por INSALUD, INSS e IMSERSO tras la llegada de la democracia?",
+                options: { a: "Instituto Nacional de la Salud", b: "Instituto Nacional de Previsión", c: "Instituto Nacional de Gestión Sanitaria", d: "Ministerio de Trabajo" },
+                answer: "b"
+            },
+            {
+                question: "13. ¿Qué órgano dentro de cada área de salud articula la participación ciudadana?",
+                options: { a: "Gerente del área", b: "Consejo de salud", c: "Comité consultivo", d: "Servicio regional de salud" },
+                answer: "b"
+            },
+            {
+                question: "14. ¿Qué ley sentó las bases del sistema de Seguridad Social en 1963?",
+                options: { a: "Ley General de Sanidad", b: "Ley de Bases de Sanidad Nacional", c: "Ley de Cohesión y Calidad", d: "Ley de Bases de la Seguridad Social" },
+                answer: "d"
+            },
+            {
+                question: "15. ¿Cuál es el nivel organizativo mínimo del SNS donde se desarrolla la atención primaria?",
+                options: { a: "Área de salud", b: "Zona básica de salud", c: "Distrito sanitario", d: "Servicio regional de salud" },
+                answer: "b"
+            },
+            {
+                question: "16. ¿Qué principio del Sistema Nacional de Salud busca eliminar barreras económicas, sociales o geográficas?",
+                options: { a: "Equidad", b: "Integración de recursos", c: "Participación", d: "Organización territorial" },
+                answer: "a"
+            },
+            {
+                question: "17. ¿Qué institución sanitaria se encargaba de la gestión en Ceuta y Melilla?",
+                options: { a: "IMSERSO", b: "INGESA", c: "INSS", d: "INSALUD" },
+                answer: "d" // 'encargaba' (pasado) -> INSALUD. Hoy es INGESA.
+            },
+            {
+                question: "18. ¿Qué mapa sanitario representa tanto la situación actual como la deseada en el futuro?",
+                options: { a: "Mapa general", b: "Mapa inventario", c: "Mapa funcional", d: "Mapa prospectivo" },
+                answer: "d"
+            },
+            {
+                question: "19. ¿Qué criterio define principalmente el área de salud?",
+                options: { a: "Tener al menos tres hospitales", b: "Ser equivalente a un municipio", c: "Incluir centros privados", d: "Atender a 200.000-250.000 habitantes" },
+                answer: "d"
+            },
+            {
+                question: "20. ¿En qué año se creó la Ley General de Sanidad en España?",
+                options: { a: "1981", b: "1986", c: "1990", d: "1978" },
+                answer: "b"
+            }
+        ];
+
+        // --- ESTADO DEL TEST ---
+        const totalQuestions = quizData.length; // Ahora es 19
+        let currentQuestionIndex = 0;
+        let userAnswers = new Array(totalQuestions).fill(null);
+        let scoreAciertos = 0;
+        let scoreErrores = 0;
+
+        // --- REFERENCIAS AL DOM ---
+        const quizForm = document.getElementById('quizForm');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const navButtons = document.getElementById('nav-buttons');
+        
+        // Marcadores
+        const quizProgress = document.getElementById('quiz-progress');
+        const progressText = document.getElementById('progress-text');
+        const scoreAciertosLiveEl = document.getElementById('score-aciertos-live');
+        const scoreErroresLiveEl = document.getElementById('score-errores-live');
+        
+        const resultsBoard = document.getElementById('results-board');
+        const scoreAciertosEl = document.getElementById('score-aciertos');
+        const scoreErroresEl = document.getElementById('score-errores');
+        const scoreQuedanEl = document.getElementById('score-quedan');
+
+        // --- LÓGICA DEL TEST ---
+
+        /**
+         * Muestra la pregunta actual en el DOM.
+         * @param {number} index - El índice de la pregunta a mostrar.
+         */
+        function showQuestion(index) {
+            // Actualizar el índice
+            currentQuestionIndex = index;
+            const currentQuestion = quizData[index];
+            
+            // Renumerar la pregunta para el usuario, ya que saltamos la #11
+            const userFacingQuestionNumber = index < 10 ? (currentQuestion.question.split('.')[0]) : (index + 1);
+            let questionText = currentQuestion.question;
+            
+            // Reconstruir el texto de la pregunta para que la numeración sea correlativa si es necesario
+            if (index >= 10) { // A partir de la pregunta 12 (índice 10)
+                 questionText = userFacingQuestionNumber + ". " + currentQuestion.question.split('.').slice(1).join('.').trim();
+            }
+
+            const userAnswer = userAnswers[index];
+            const correctAnswer = currentQuestion.answer;
+
+            // Generar HTML para las opciones
+            let optionsHtml = [];
+            for (const [key, value] of Object.entries(currentQuestion.options)) {
+                // 'disabled' para forzar el clic en la etiqueta
+                optionsHtml.push(
+                    `<label>
+                        <input type="radio" name="q_current" value="${key}" disabled>
+                        <span>${key}. ${value}</span>
+                    </label>`
+                );
+            }
+
+            // Actualizar el HTML del formulario
+            quizForm.innerHTML = `
+                <div class="question-block">
+                    <p>${questionText}</p>
+                    ${optionsHtml.join('')}
+                </div>
+            `;
+            
+            const questionBlock = quizForm.querySelector('.question-block');
+            const labels = quizForm.querySelectorAll('label');
+
+            if (userAnswer !== null) {
+                // La pregunta ya ha sido respondida (al usar "Anterior")
+                // Simplemente mostramos el estado guardado
+                questionBlock.classList.add('answered'); // Deshabilita clics vía CSS
+                const userLabel = quizForm.querySelector(`label > input[value="${userAnswer}"]`).parentElement;
+                userLabel.querySelector('input').checked = true; // Marcar el radio
+
+                if (userAnswer === correctAnswer) {
+                    userLabel.classList.add('correct');
+                } else {
+                    userLabel.classList.add('incorrect');
+                    const correctLabel = quizForm.querySelector(`label > input[value="${correctAnswer}"]`).parentElement;
+                    correctLabel.classList.add('correct');
+                }
+            } else {
+                // Pregunta nueva, añadir listeners
+                labels.forEach(label => {
+                    label.addEventListener('click', handleAnswerClick);
+                });
+            }
+            
+            // Actualizar el estado de los botones
+            prevBtn.disabled = (index === 0);
+            
+            if (index === totalQuestions - 1) {
+                nextBtn.textContent = 'Ver Resultados';
+                nextBtn.classList.add('submit-style');
+            } else {
+                nextBtn.textContent = 'Siguiente';
+                nextBtn.classList.remove('submit-style');
+            }
+            
+            // Actualizar contadores
+            updateScoreboard();
+        }
+
+        /**
+         * Maneja el clic en una respuesta, la evalúa y actualiza la UI.
+         */
+        function handleAnswerClick(event) {
+            const clickedLabel = event.currentTarget;
+            const questionBlock = clickedLabel.closest('.question-block');
+
+            // Prevenir dobles clics
+            if (questionBlock.classList.contains('answered')) return;
+            
+            // Bloquear más clics en esta pregunta
+            questionBlock.classList.add('answered');
+
+            const selectedInput = clickedLabel.querySelector('input');
+            selectedInput.checked = true; // Marcar el radio button
+            
+            const userAnswer = selectedInput.value;
+            const correctAnswer = quizData[currentQuestionIndex].answer;
+
+            // Guardar respuesta
+            userAnswers[currentQuestionIndex] = userAnswer;
+
+            // Evaluar y aplicar estilos
+            if (userAnswer === correctAnswer) {
+                clickedLabel.classList.add('correct');
+                scoreAciertos++;
+            } else {
+                clickedLabel.classList.add('incorrect');
+                scoreErrores++;
+                // Mostrar la respuesta correcta
+                const correctLabel = quizForm.querySelector(`label > input[value="${correctAnswer}"]`).parentElement;
+                correctLabel.classList.add('correct');
+            }
+            
+            // Actualizar el marcador superior
+            updateScoreboard();
+        }
+        
+        /**
+         * Actualiza los contadores de progreso, aciertos y errores.
+         */
+        function updateScoreboard() {
+            progressText.textContent = `${currentQuestionIndex + 1} / ${totalQuestions}`;
+            scoreAciertosLiveEl.textContent = scoreAciertos;
+            scoreErroresLiveEl.textContent = scoreErrores;
+        }
+
+        /**
+         * Mueve a la siguiente pregunta o califica el test.
+         */
+        function handleNext() {
+            if (currentQuestionIndex < totalQuestions - 1) {
+                // Ir a la siguiente pregunta
+                showQuestion(currentQuestionIndex + 1);
+            } else {
+                // Es la última pregunta, calificar
+                gradeQuiz();
+            }
+        }
+
+        /**
+         * Mueve a la pregunta anterior.
+         */
+        function handlePrev() {
+            if (currentQuestionIndex > 0) {
+                showQuestion(currentQuestionIndex - 1);
+            }
+        }
+
+        /**
+         * Califica el test y muestra los resultados.
+         */
+        function gradeQuiz() {
+            let aciertos_final = 0;
+            let errores_final = 0;
+            let sinContestar = 0;
+
+            let resultsHtml = [];
+
+            // Calcular puntuaciones y generar HTML de resultados
+            quizData.forEach((question, index) => {
+                const correctAnswer = question.answer;
+                const userAnswer = userAnswers[index];
+                
+                // Renumerar la pregunta para el usuario
+                const userFacingQuestionNumber = index < 10 ? (question.question.split('.')[0]) : (index + 1);
+                let questionText = question.question;
+                if (index >= 10) { 
+                    questionText = userFacingQuestionNumber + ". " + question.question.split('.').slice(1).join('.').trim();
+                }
+
+                let optionsHtml = [];
+                
+                for (const [key, value] of Object.entries(question.options)) {
+                    let labelClass = '';
+                    
+                    if (key === correctAnswer) {
+                        labelClass = 'correct';
+                    }
+                    
+                    if (userAnswer === key && userAnswer !== correctAnswer) {
+                        labelClass = 'incorrect user-incorrect';
+                    } else if (userAnswer === key && userAnswer === correctAnswer) {
+                        // 'correct' ya está asignada
+                    }
+
+                    optionsHtml.push(
+                        `<label class="${labelClass}">
+                            <!-- Los inputs están deshabilitados en los resultados -->
+                            <input type="radio" name="q_${index}" value="${key}" ${userAnswer === key ? 'checked' : ''} disabled>
+                            <span>${key}. ${value}</span>
+                        </label>`
+                    );
+                }
+                
+                resultsHtml.push(
+                    `<div class="question-block">
+                        <p>${questionText}</p>
+                        ${optionsHtml.join('')}
+                    </div>`
+                );
+
+                // Contar puntos
+                if (userAnswer === null) {
+                    sinContestar++;
+                } else if (userAnswer === correctAnswer) {
+                    aciertos_final++;
+                } else {
+                    errores_final++;
+                }
+            });
+
+            // --- Actualizar la UI para mostrar resultados ---
+
+            // 1. Ocultar progreso y navegación
+            quizProgress.classList.add('hidden');
+            navButtons.classList.add('hidden');
+            
+            // 2. Mostrar marcador de resultados
+            resultsBoard.classList.remove('hidden');
+            scoreAciertosEl.textContent = aciertos_final;
+            scoreErroresEl.textContent = errores_final;
+            scoreQuedanEl.textContent = sinContestar;
+            
+            // 3. Quitar el modo "single-question" y mostrar todos los resultados
+            quizForm.classList.remove('single-question-mode');
+            quizForm.innerHTML = resultsHtml.join('');
+            
+            // 4. Subir al inicio de la página
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // --- INICIALIZACIÓN ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Añadir Listeners a los botones
+            nextBtn.addEventListener('click', handleNext);
+            prevBtn.addEventListener('click', handlePrev);
+
+            // Mostrar la primera pregunta
+            showQuestion(0);
+        });
+
+    </script>
+
+</body>
+</html>
